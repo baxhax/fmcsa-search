@@ -1,44 +1,3 @@
-import requests
-import streamlit as st
-import lxml.html
-import pandas as pd
-import urllib.parse
-import time
-
-# Streamlit app title
-st.title("FMCSA Carrier Search")
-
-# Add a textbox for user input
-search_term = st.text_input("Enter a search term:")
-
-def extract_additional_carrier_info(carrier_link):
-    """
-    Extract additional information from carrier page using the working xpath.
-    """
-    try:
-        time.sleep(0.1)
-        
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        
-        response = requests.get(carrier_link, headers=headers)
-        
-        if response.status_code != 200:
-            return f"Error: HTTP {response.status_code}"
-        
-        tree = lxml.html.fromstring(response.content)
-        elements = tree.xpath("//table//tr[17]/td[1]")
-        
-        if elements:
-            return elements[0].text_content().strip()
-        return "Data not found"
-        
-    except requests.exceptions.RequestException as e:
-        return f"Network Error: {str(e)}"
-    except Exception as e:
-        return f"Error: {type(e).__name__}"
-
 def extract_table_with_lxml(searchstring):
     # URL-encode the search string
     encoded_searchstring = urllib.parse.quote(f'*{searchstring.upper()}*')
@@ -65,6 +24,10 @@ def extract_table_with_lxml(searchstring):
     rows = table.xpath('.//tr')
     total_rows = len(rows) - 1  # Subtract 1 for header row
     
+    # Progress bar and placeholder for logs
+    progress_bar = st.progress(0)
+    log_placeholder = st.empty()
+    
     for index, row in enumerate(rows[1:], 1):  # Skip header row
         cells = row.xpath('.//td|.//th')
         cell_texts = [cell.text_content().strip() for cell in cells]
@@ -83,6 +46,10 @@ def extract_table_with_lxml(searchstring):
             # Ensure we have at least two elements before adding to data
             if len(cell_texts) >= 2:
                 data.append([cell_texts[0], cell_texts[1], carrier_link, power_units])
+        
+        # Update progress bar and log
+        progress_bar.progress(index / total_rows)
+        log_placeholder.info(f"Processing carrier {index}/{total_rows}")
     
     # Create DataFrame
     df = pd.DataFrame(data, columns=headers)
