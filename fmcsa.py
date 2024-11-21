@@ -21,7 +21,7 @@ def extract_additional_carrier_info(carrier_link):
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
         
-        response = requests.get(carrier_link, headers=headers, timeout=10)  # Added timeout
+        response = requests.get(carrier_link, headers=headers, timeout=10)
         
         if response.status_code != 200:
             return f"Error: HTTP {response.status_code}"
@@ -50,7 +50,7 @@ def extract_table_with_lxml(searchstring):
     }
     
     try:
-        response = requests.get(url, headers=headers, timeout=10)  # Added timeout
+        response = requests.get(url, headers=headers, timeout=10)
         tree = lxml.html.fromstring(response.content)
         table = tree.xpath('//table')[2]
         
@@ -60,10 +60,15 @@ def extract_table_with_lxml(searchstring):
         rows = table.xpath('.//tr')[1:]  # Skip header row
         total_rows = len(rows)
         
-        # Create a single progress bar
+        # Create progress containers outside the loop
+        progress_text = st.empty()
         progress_bar = st.progress(0)
         
         for index, row in enumerate(rows):
+            # Update progress text and bar
+            progress_text.text(f"Processing carrier {index + 1} of {total_rows}")
+            progress_bar.progress((index + 1) / total_rows)
+            
             cells = row.xpath('.//td|.//th')
             cell_texts = [cell.text_content().strip() for cell in cells]
             
@@ -75,12 +80,10 @@ def extract_table_with_lxml(searchstring):
                 
                 power_units = extract_additional_carrier_info(carrier_link)
                 data.append([cell_texts[0], cell_texts[1], carrier_link, power_units])
-            
-            # Update progress less frequently
-            if index % 5 == 0:  # Update every 5 rows
-                progress_bar.progress(index / total_rows)
         
-        progress_bar.progress(1.0)
+        # Clear the progress indicators when done
+        progress_text.empty()
+        progress_bar.empty()
         
         return pd.DataFrame(data, columns=headers)
         
@@ -94,7 +97,7 @@ def main():
             st.warning("Please enter a search term.")
             return
         
-        with st.spinner("Fetching carrier information..."):
+        with st.spinner("Initializing search..."):
             try:
                 df = extract_table_with_lxml(search_term)
                 
