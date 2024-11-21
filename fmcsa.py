@@ -6,7 +6,7 @@ import urllib.parse
 import time
 
 # Streamlit app title
-st.title("FMSCA Carrier Search")
+st.title("FMCSA Carrier Search")
 
 # Add a textbox for user input
 search_term = st.text_input("Enter a search term:")
