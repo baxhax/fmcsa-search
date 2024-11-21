@@ -3,7 +3,7 @@ import streamlit as st
 import lxml.html
 import pandas as pd
 import urllib.parse
-import time
+#import time
 
 # Streamlit app title
 st.title("FMCSA Carrier Search")
@@ -16,7 +16,7 @@ def extract_additional_carrier_info(carrier_link):
     Extract additional information from carrier page using the working xpath.
     """
     try:
-        time.sleep(0.1)
+        #time.sleep(0.1)
         
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
