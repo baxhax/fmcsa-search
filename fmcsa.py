@@ -1,8 +1,17 @@
 import requests
+import streamlit as st
 import lxml.html
 import pandas as pd
 import urllib.parse
 import time
+
+# Streamlit app title
+st.title("FMSCA Carrier Search")
+
+# Add a textbox for user input
+search_term = st.text_input("Enter a search term:")
+
+
 
 def extract_additional_carrier_info(carrier_link):
     """
@@ -93,26 +102,35 @@ def extract_table_with_lxml(searchstring):
     return df
 
 def main():
-    while True:
-        # Get user input
-        searchstring = input("Enter a search term (or 'quit' to exit): ").strip()
-        
-        # Check if user wants to quit
-        if searchstring.lower() == 'quit':
-            print("Exiting the program.")
-            break
-        
-        # Validate input
-        if not searchstring:
-            print("Please enter a valid search string.")
-            continue
-        
+    # Button to trigger the action
+    if st.button("Submit"):
+        # Example: Do something with the search term
         try:
-            # Extract and save data
-            df = extract_table_with_lxml(searchstring)
+            df = extract_table_with_lxml(search_term)
         except Exception as e:
             print(f"An error occurred: {e}")
             print("Please try again.")
+
+    # while True:
+        # # Get user input
+        # searchstring = input("Enter a search term (or 'quit' to exit): ").strip()
+        
+        # # Check if user wants to quit
+        # if searchstring.lower() == 'quit':
+        #     print("Exiting the program.")
+        #     break
+        
+        # # Validate input
+        # if not searchstring:
+        #     print("Please enter a valid search string.")
+        #     continue
+        
+        # try:
+        #     # Extract and save data
+        #     df = extract_table_with_lxml(searchstring)
+        # except Exception as e:
+        #     print(f"An error occurred: {e}")
+        #     print("Please try again.")
 
 # Run the main program
 if __name__ == "__main__":
