@@ -11,8 +11,6 @@ st.title("FMSCA Carrier Search")
 # Add a textbox for user input
 search_term = st.text_input("Enter a search term:")
 
-
-
 def extract_additional_carrier_info(carrier_link):
     """
     Extract additional information from carrier page using the working xpath.
@@ -66,7 +64,6 @@ def extract_table_with_lxml(searchstring):
     
     rows = table.xpath('.//tr')
     total_rows = len(rows) - 1  # Subtract 1 for header row
-    print(f"\nProcessing {total_rows} carriers...")
     
     for index, row in enumerate(rows[1:], 1):  # Skip header row
         cells = row.xpath('.//td|.//th')
@@ -80,7 +77,6 @@ def extract_table_with_lxml(searchstring):
             if carrier_link and not carrier_link.startswith('http'):
                 carrier_link = f'https://safer.fmcsa.dot.gov/{carrier_link}'
             
-            print(f"Processing carrier {index}/{total_rows}")
             # Extract additional info from the carrier's page
             power_units = extract_additional_carrier_info(carrier_link)
             
@@ -90,47 +86,35 @@ def extract_table_with_lxml(searchstring):
     
     # Create DataFrame
     df = pd.DataFrame(data, columns=headers)
-    
-    # Export to CSV
-    output_filename = f'{searchstring.replace(" ", "_")}_carriers.csv'
-    df.to_csv(output_filename, index=False)
-    
-    print(f"\nExported {len(df)} rows to {output_filename}")
-    print("\nFirst few rows:")
-    print(df.head())
-    
     return df
 
 def main():
     # Button to trigger the action
     if st.button("Submit"):
-        # Example: Do something with the search term
-        try:
-            df = extract_table_with_lxml(search_term)
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            print("Please try again.")
+        # Validate input
+        if not search_term:
+            st.warning("Please enter a search term.")
+            return
+        
+        # Process the search term
+        with st.spinner("Fetching carrier information..."):
+            try:
+                df = extract_table_with_lxml(search_term)
+                st.success(f"Found {len(df)} carriers!")
 
-    # while True:
-        # # Get user input
-        # searchstring = input("Enter a search term (or 'quit' to exit): ").strip()
-        
-        # # Check if user wants to quit
-        # if searchstring.lower() == 'quit':
-        #     print("Exiting the program.")
-        #     break
-        
-        # # Validate input
-        # if not searchstring:
-        #     print("Please enter a valid search string.")
-        #     continue
-        
-        # try:
-        #     # Extract and save data
-        #     df = extract_table_with_lxml(searchstring)
-        # except Exception as e:
-        #     print(f"An error occurred: {e}")
-        #     print("Please try again.")
+                # Show the DataFrame in the app
+                st.dataframe(df)
+
+                # Add a download button for the DataFrame
+                csv_data = df.to_csv(index=False)
+                st.download_button(
+                    label="Download CSV",
+                    data=csv_data,
+                    file_name=f"{search_term.replace(' ', '_')}_carriers.csv",
+                    mime="text/csv"
+                )
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
 
 # Run the main program
 if __name__ == "__main__":
