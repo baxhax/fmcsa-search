@@ -1,22 +1,28 @@
-import streamlit as st
 import requests
+import streamlit as st
 import lxml.html
 import pandas as pd
 import urllib.parse
-import functools
+#import time
 
-# Add caching to reduce repeated web requests
-@functools.lru_cache(maxsize=100)
-def cached_request(url):
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-    return requests.get(url, headers=headers)
+# Streamlit app title
+st.title("FMCSA Carrier Search")
 
-# Modify extract_additional_carrier_info to use cached_request
+# Add a textbox for user input
+search_term = st.text_input("Enter a search term:")
+
 def extract_additional_carrier_info(carrier_link):
+    """
+    Extract additional information from carrier page using the working xpath.
+    """
     try:
-        response = cached_request(carrier_link)
+        #time.sleep(0.1)
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
+        response = requests.get(carrier_link, headers=headers)
         
         if response.status_code != 200:
             return f"Error: HTTP {response.status_code}"
@@ -24,13 +30,15 @@ def extract_additional_carrier_info(carrier_link):
         tree = lxml.html.fromstring(response.content)
         elements = tree.xpath("//table//tr[17]/td[1]")
         
-        return elements[0].text_content().strip() if elements else "Data not found"
+        if elements:
+            return elements[0].text_content().strip()
+        return "Data not found"
         
+    except requests.exceptions.RequestException as e:
+        return f"Network Error: {str(e)}"
     except Exception as e:
         return f"Error: {type(e).__name__}"
 
-# Use st.cache_data for DataFrame generation
-@st.cache_data
 def extract_table_with_lxml(searchstring):
     # URL-encode the search string
     encoded_searchstring = urllib.parse.quote(f'*{searchstring.upper()}*')
